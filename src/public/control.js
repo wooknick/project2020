@@ -20,7 +20,7 @@ var playSound = file => {
     source.start(0);
   };
   var xhr = new XMLHttpRequest();
-  xhr.open("get", getFileURL(file, "http://localhost:3000/"), true);
+  xhr.open("get", getFileURL(file), true);
   xhr.responseType = "arraybuffer";
   xhr.onload = () => {
     context.decodeAudioData(xhr.response, function(incomingBuffer) {
@@ -30,14 +30,27 @@ var playSound = file => {
         console.log(nowPlaySource);
         nowPlaySource.stop();
       }
-      setTimeout(play, 500);
+      setTimeout(play, 200);
     });
   };
   xhr.send();
 };
 
-var getFileURL = (file, host) => {
-  return `${host}/sounds/${file}`;
+var getFileURL = file => {
+  var ret = "";
+  if (file === "dawn") {
+    ret = "https://dl.dropboxusercontent.com/s/4gre7t0md3z7skd/dawn.mp3?dl=0";
+  } else if (file === "magical_journey") {
+    ret =
+      "https://dl.dropboxusercontent.com/s/n27d4jo5le70cxf/magical_journey.mp3?dl=0";
+  } else if (file === "first_snow") {
+    ret =
+      "https://dl.dropboxusercontent.com/s/8a6a0s739iacjjy/music_zapsplat_rabbits_first_snow_143.mp3?dl=0";
+  } else if (file === "star_gazing") {
+    ret =
+      "https://dl.dropboxusercontent.com/s/v04fwko5ggxdjb3/star_gazing.mp3?dl=0";
+  }
+  return ret;
 };
 
 // 슬라이드 설정 시작
@@ -57,17 +70,13 @@ var flkty = new Flickity(elem, {
       pageUpdate(index);
       console.log(preIndex);
       if (preIndex === 2 && index === 3) {
-        playSound("first_snow.mp3");
+        playSound("star_gazing");
       } else if (preIndex === 5 && index === 6) {
-        playSound("star_gazing.mp3");
-      } else if (preIndex === 6 && index === 7) {
-        playSound("magical_journey.mp3");
-      } else if (preIndex === 7 && index === 6) {
-        playSound("star_gazing.mp3");
+        playSound("magical_journey");
       } else if (preIndex === 6 && index === 5) {
-        playSound("first_snow.mp3");
+        playSound("star_gazing");
       } else if (preIndex === 3 && index === 2) {
-        playSound("dawn.mp3");
+        playSound("dawn");
       }
       preIndex = index;
     }
@@ -75,7 +84,9 @@ var flkty = new Flickity(elem, {
 });
 
 flkty.on("staticClick", () => {
-  playSound("dawn.mp3");
+  if (!nowPlaySource) {
+    playSound("dawn");
+  }
 });
 
 var pageUpdate = page => {
