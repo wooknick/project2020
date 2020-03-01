@@ -69,72 +69,74 @@ parcelRequire = (function(e, r, t, n) {
           );
         };
         t();
-        var e,
-          n = new AudioContext(),
-          o = function(t) {
-            var o,
-              s,
+        var n,
+          e = window.AudioContext || window.webkitAudioContext,
+          o = new e(),
+          a = function(t) {
+            var e,
+              a,
               c = function() {
-                var t = n.createBufferSource();
-                (e = t), (t.buffer = o), t.connect(n.destination), t.start(0);
+                var t = o.createBufferSource();
+                (n = t), (t.buffer = e), t.connect(o.destination), t.start(0);
               };
-            (s = new XMLHttpRequest()).open("get", a(t), !0),
-              (s.responseType = "arraybuffer"),
-              (s.onload = function() {
-                n.decodeAudioData(s.response, function(t) {
-                  (o = t),
-                    console.log(e),
-                    e && (console.log(e), e.stop()),
+            (a = new XMLHttpRequest()).open("get", s(t), !0),
+              (a.responseType = "arraybuffer"),
+              (a.onload = function() {
+                o.decodeAudioData(a.response, function(t) {
+                  (e = t),
+                    console.log(n),
+                    n && (console.log(n), n.stop()),
                     setTimeout(c, 200);
                 });
               }),
-              s.send();
+              a.send();
           },
-          a = function(t) {
-            var e = "";
+          s = function(t) {
+            var n = "";
             return (
               "dawn" === t
-                ? (e =
+                ? (n =
                     "https://dl.dropboxusercontent.com/s/4gre7t0md3z7skd/dawn.mp3?dl=0")
                 : "magical_journey" === t
-                ? (e =
+                ? (n =
                     "https://dl.dropboxusercontent.com/s/n27d4jo5le70cxf/magical_journey.mp3?dl=0")
                 : "first_snow" === t
-                ? (e =
+                ? (n =
                     "https://dl.dropboxusercontent.com/s/8a6a0s739iacjjy/music_zapsplat_rabbits_first_snow_143.mp3?dl=0")
                 : "star_gazing" === t &&
-                  (e =
+                  (n =
                     "https://dl.dropboxusercontent.com/s/v04fwko5ggxdjb3/star_gazing.mp3?dl=0"),
-              e
+              n
             );
           },
-          s = 0,
-          c = document.querySelector(".content"),
-          r = new Flickity(c, {
+          c = 0,
+          r = document.querySelector(".content"),
+          l = new Flickity(r, {
             cellAlign: "left",
             dragThreshold: 10,
             pageDots: !1,
             prevNextButtons: !1,
             on: {
-              ready: function() {},
+              ready: function() {
+                console.log("start");
+              },
               change: function(t) {
-                l(t),
-                  console.log(s),
-                  2 === s && 3 === t
-                    ? o("star_gazing")
-                    : 5 === s && 6 === t
-                    ? o("magical_journey")
-                    : 6 === s && 5 === t
-                    ? o("star_gazing")
-                    : 3 === s && 2 === t && o("dawn"),
-                  (s = t);
+                d(t),
+                  2 === c && 3 === t
+                    ? a("star_gazing")
+                    : 5 === c && 6 === t
+                    ? a("magical_journey")
+                    : 6 === c && 5 === t
+                    ? a("star_gazing")
+                    : 3 === c && 2 === t && a("dawn"),
+                  (c = t);
               }
             }
           });
-        r.on("staticClick", function() {
-          e || o("dawn");
+        l.on("staticClick", function() {
+          n || a("dawn");
         });
-        var l = function(t) {
+        var d = function(t) {
           document.getElementsByClassName(
             "pages_text"
           )[0].innerHTML = ""
@@ -149,4 +151,4 @@ parcelRequire = (function(e, r, t, n) {
   ["s9h5"],
   null
 );
-//# sourceMappingURL=./control.55257d39.js.map
+//# sourceMappingURL=/control.3e73e40e.js.map

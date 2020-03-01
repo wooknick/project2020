@@ -6,6 +6,7 @@ var init = () => {
 init();
 
 // Sound 설정 시작
+var AudioContext = window.AudioContext || window.webkitAudioContext;
 var context = new AudioContext();
 var nowPlaySource;
 
@@ -64,11 +65,10 @@ var flkty = new Flickity(elem, {
   prevNextButtons: false,
   on: {
     ready: function() {
-      //   playSound("dawn.mp3");
+      console.log("start");
     },
     change: function(index) {
       pageUpdate(index);
-      console.log(preIndex);
       if (preIndex === 2 && index === 3) {
         playSound("star_gazing");
       } else if (preIndex === 5 && index === 6) {
