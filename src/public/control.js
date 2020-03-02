@@ -6,35 +6,96 @@ var init = () => {
 init();
 
 // Sound 설정 시작
-var AudioContext = window.AudioContext || window.webkitAudioContext;
-var context = new AudioContext();
-var nowPlaySource;
+// var AudioContext = window.AudioContext || window.webkitAudioContext;
+// var context = new AudioContext();
+// var nowPlaySource;
+
+// var playSound = file => {
+//   var savedBuffer;
+//   var xhr;
+//   var play = () => {
+//     var source = context.createBufferSource();
+//     nowPlaySource = source;
+//     source.buffer = savedBuffer;
+//     source.connect(context.destination);
+//     source.start(0);
+//   };
+//   var xhr = new XMLHttpRequest();
+//   xhr.open("get", getFileURL(file), true);
+//   xhr.responseType = "arraybuffer";
+//   xhr.onload = () => {
+//     context.decodeAudioData(xhr.response, function(incomingBuffer) {
+//       savedBuffer = incomingBuffer;
+//       if (!!nowPlaySource) {
+//         nowPlaySource.stop();
+//       }
+//       setTimeout(play, 200);
+//     });
+//   };
+//   xhr.send();
+// };
+var soundInit = false;
+var dawn = document.getElementById("dawn");
+var magical_journey = document.getElementById("magical_journey");
+var star_gazing = document.getElementById("star_gazing");
+dawn.muted = true;
+dawn.loop = true;
+magical_journey.muted = true;
+magical_journey.loop = true;
+star_gazing.muted = true;
+star_gazing.loop = true;
 
 var playSound = file => {
-  var savedBuffer;
-  var xhr;
-  var play = () => {
-    var source = context.createBufferSource();
-    nowPlaySource = source;
-    source.buffer = savedBuffer;
-    source.connect(context.destination);
-    source.start(0);
-  };
-  var xhr = new XMLHttpRequest();
-  xhr.open("get", getFileURL(file), true);
-  xhr.responseType = "arraybuffer";
-  xhr.onload = () => {
-    context.decodeAudioData(xhr.response, function(incomingBuffer) {
-      savedBuffer = incomingBuffer;
-      console.log(nowPlaySource);
-      if (!!nowPlaySource) {
-        console.log(nowPlaySource);
-        nowPlaySource.stop();
-      }
-      setTimeout(play, 200);
-    });
-  };
-  xhr.send();
+  //   dawn.play();
+  //   magical_journey.play();
+  //   star_gazing.play();
+  if (file === "init") {
+    dawn.muted = false;
+    dawn.play();
+    magical_journey.play();
+    star_gazing.play();
+  } else if (file === "dawn") {
+    magical_journey.muted = true;
+    star_gazing.muted = true;
+    dawn.currentTime = 0;
+    setTimeout(() => {
+      dawn.muted = false;
+    }, 500);
+    // dawn.muted = false;
+    // dawn.loop = true;
+    // dawn.play();
+  } else if (file === "magical_journey") {
+    dawn.muted = true;
+    star_gazing.muted = true;
+    magical_journey.currentTime = 0;
+    setTimeout(() => {
+      magical_journey.muted = false;
+    }, 500);
+    // magical_journey.muted = false;
+    // magical_journey.loop = true;
+    // magical_journey.play();
+  } else if (file === "star_gazing") {
+    dawn.muted = true;
+    magical_journey.muted = true;
+    star_gazing.currentTime = 0;
+    setTimeout(() => {
+      star_gazing.muted = false;
+    }, 500);
+    // star_gazing.muted = false;
+    // star_gazing.loop = true;
+    // star_gazing.play();
+  }
+  //   if (!!sound) {
+  //     sound.pause();
+  //   }
+  //   alert(sound);
+  //   sound = document.getElementById(file);
+  //   sound.currentTime = 0;
+  //   sound.loop = true;
+  //   //   setTimeout(() => {
+  //   //     sound.play();
+  //   //   }, 200);
+  //   sound.play();
 };
 
 var getFileURL = file => {
@@ -69,6 +130,9 @@ var flkty = new Flickity(elem, {
     },
     change: function(index) {
       pageUpdate(index);
+      if (!soundInit) {
+        playSound("init");
+      }
       if (preIndex === 2 && index === 3) {
         playSound("star_gazing");
       } else if (preIndex === 5 && index === 6) {
@@ -84,8 +148,11 @@ var flkty = new Flickity(elem, {
 });
 
 flkty.on("staticClick", () => {
-  if (!nowPlaySource) {
-    playSound("dawn");
+  //   if (!nowPlaySource) {
+  //     playSound("dawn");
+  //   }
+  if (!soundInit) {
+    playSound("init");
   }
 });
 
