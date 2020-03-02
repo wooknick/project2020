@@ -132,6 +132,7 @@ var flkty = new Flickity(elem, {
       pageUpdate(index);
       if (!soundInit) {
         playSound("init");
+        soundInit = true;
       }
       if (preIndex === 2 && index === 3) {
         playSound("star_gazing");
@@ -153,6 +154,7 @@ flkty.on("staticClick", () => {
   //   }
   if (!soundInit) {
     playSound("init");
+    soundInit = true;
   }
 });
 
