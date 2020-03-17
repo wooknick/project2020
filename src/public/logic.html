@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>relax.</title>
+    <script src="tonal.min.js"></script>
+    <style>
+      * {
+        transition: opacity 1s;
+      }
+      html {
+        height: 100%;
+      }
+      body {
+        background-color: #fff;
+        transition: background-color 2s;
+      }
+      #grad {
+        display: none;
+        position: fixed;
+        z-index: 0;
+        left: -10px;
+        top: -10px;
+        width: 101%;
+        height: 101%;
+        background-color: lightblue;
+        background: linear-gradient(white, transparent, transparent);
+      }
+      * {
+        font-family: Arial, Sans-Serif;
+      }
+      @keyframes fader {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      @keyframes droplet {
+        0% {
+          opacity: 1;
+          transform: scale(1, 1);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(4, 4);
+        }
+      }
+      .drop {
+        display: block;
+        position: fixed;
+        animation-name: droplet;
+        animation-duration: 3s;
+        border: 1px solid #fff;
+        background-color: #eee;
+        width: 50px;
+        height: 50px;
+        border-radius: 25px;
+        text-align: center;
+        font-family: Arial;
+        font-size: 12px;
+        color: #ddd;
+        line-height: 50px;
+        z-index: 1;
+      }
+      #play a {
+        display: none;
+        font-size: 16px;
+        text-decoration: underline;
+        color: #fff;
+        opacity: 0.5;
+      }
+
+      #options,
+      #medTimer {
+        opacity: 0;
+        display: block;
+        left: 2px;
+        z-index: 999;
+      }
+
+      #medTimer {
+        opacity: 0.8;
+        display: block;
+      }
+
+      #medTimerActive {
+        display: none;
+      }
+      table {
+        background-color: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 0.9em;
+        letter-spacing: 0.1em;
+      }
+      select,
+      input,
+      button {
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #000;
+        border: none;
+        border-radius: 3px;
+      }
+
+      #mainTable {
+        transition: all 1s;
+        opacity: 0.15;
+        width: 400px;
+        height: auto;
+        position: absolute;
+        left: 50%;
+        margin-left: -200px;
+        top: 10%;
+      }
+
+      #mainTable:hover {
+        opacity: 1;
+      }
+    </style>
+    <script>
+      var state = -1;
+      var t;
+      var d;
+      var attack = 10;
+      var audio = new (window.AudioContext || window.webkitAudioContext)();
+      var colors = new Array(
+        "#1B1B1B",
+        "#666",
+        "#614051",
+        "#732E6C",
+        "#A63A79",
+        "#3F26BF",
+        "#4F69C6",
+        "#2887C8",
+        "#0095B7",
+        "#29AB87",
+        "#63B76C",
+        "#BEE64B",
+        "#D9E650",
+        "#FFFF99",
+        "#E6BC5C",
+        "#E97451",
+        "#DA614E",
+        "#C62D42",
+        "#9C2542",
+        "#8A496B",
+        "#5946B2",
+        "#58427C",
+        "#2E2D88",
+        "#1B1B1B"
+      );
+
+      window.addEventListener(
+        "touchstart",
+        function() {
+          // create empty buffer
+          var buffer = audio.createBuffer(1, 1, 22050);
+          var source = audio.createBufferSource();
+          source.buffer = buffer;
+          // connect to output (your speakers)
+          source.connect(audio.destination);
+          // play the file
+          source.noteOn(0);
+        },
+        false
+      );
+
+      if (window.speechSynthesis) {
+        var announce = window.speechSynthesis;
+      }
+
+      function separateTones(theme, octave) {
+        let theseNotes = new Array();
+        theseNotes["drone"] = new Array();
+        theseNotes["melody"] = new Array();
+        for (a = 0; a < theme.length; a++) {
+          if (theme[a].match(/\d+/)[0] <= octave) {
+            theseNotes["drone"].push(theme[a]);
+          } else {
+            theseNotes["melody"].push(theme[a]);
+          }
+        }
+        return theseNotes;
+      }
+
+      function drop(t, x, y) {
+        if (document.getElementsByTagName("body")[0]) {
+          let tid = Math.random() * 999999999999;
+          let coordx = ((150 + x) / 300) * 100;
+          let coordy = ((150 + y) / 300) * 100;
+          let thisDrop = document.createElement("div");
+          thisDrop.setAttribute(
+            "style",
+            "left:" + coordx + "%;top:" + coordy + "%;"
+          );
+          thisDrop.className = "drop";
+          thisDrop.id = tid;
+          thisDrop.innerHTML = t;
+          document.getElementsByTagName("body")[0].appendChild(thisDrop);
+          setTimeout("document.getElementById('" + tid + "').remove();", 2900);
+        }
+      }
+
+      function mute() {
+        state++;
+        if (document.getElementById("state")) {
+          if (state % 2 == 0) {
+            document.getElementById("state").innerHTML = "mute";
+          } else {
+            document.getElementById("state").innerHTML = "(click to unmute)";
+          }
+        }
+      }
+
+      function synth(w, f, v, a, l, d, x, y, z, note) {
+        v = v * (document.getElementById("volume").value / 100);
+
+        if (state % 2 == 1 || v == 0) {
+          return;
+        }
+
+        drop(note, x, y, z);
+
+        var gain = audio.createGain(),
+          osc = audio.createOscillator();
+        gain.connect(audio.destination);
+        gain.gain.setValueAtTime(0, audio.currentTime);
+        gain.gain.linearRampToValueAtTime(v, audio.currentTime + a / 1000);
+        gain.gain.linearRampToValueAtTime(
+          0,
+          audio.currentTime + (a / 1000 + l / 1000 + d / 1000)
+        );
+
+        panner = audio.createPanner();
+        panner.setPosition(x, y, z);
+        osc.connect(panner);
+        panner.connect(audio.destination);
+
+        osc.frequency.value = f;
+        osc.type = w;
+        osc.connect(gain);
+        osc.start(0);
+
+        var stoptime = (a + l + d) * 1.1;
+
+        setTimeout(function() {
+          osc.stop(0);
+          osc.disconnect(gain);
+          gain.disconnect(audio.destination);
+        }, stoptime);
+      }
+
+      function getTheme() {
+        let key = document.getElementById("key").value;
+        let mod = document.getElementById("mod").value;
+        let scale = document.getElementById("scale").value;
+        let notes = Tonal.Scale.notes(key + mod + " " + scale);
+        let returnTheme = new Array();
+        for (var i = 2; i <= 5; i++) {
+          for (var j = 0; j < notes.length; j++) {
+            returnTheme.push(notes[j] + i + "");
+          }
+        }
+        document.getElementById("status").innerHTML =
+          "playing phrase: " + key + mod + " " + scale;
+        return returnTheme;
+      }
+
+      //   function config() {
+      //     let m = new Date().getMonth() + 1;
+      //     let d = new Date().getDate();
+      //     let y = new Date().getFullYear();
+      //     let h = new Date().getHours();
+      //     let i = new Date().getMinutes();
+      //     let s = new Date().getSeconds();
+
+      //     let keys = new Array(
+      //       "c",
+      //       "g",
+      //       "d",
+      //       "a",
+      //       "e",
+      //       "b",
+      //       "f#",
+      //       "c#",
+      //       "g#",
+      //       "d#",
+      //       "bb",
+      //       "f"
+      //     );
+      //   }
+
+      function play(state) {
+        config();
+
+        if (state % 2 == 0) {
+          document.getElementById("stateButton").value = "pause";
+        } else {
+          document.getElementById("stateButton").value = "play";
+          return;
+        }
+
+        let voices = document.getElementById("voices").value;
+
+        for (voice = 0; voice < voices; voice++) {
+          var nextPhrase = 0;
+          let theme = getTheme();
+
+          let thisPhrase = separateTones(theme, 2);
+
+          let drone =
+            thisPhrase["drone"][
+              Math.floor(Math.random() * thisPhrase["drone"].length)
+            ];
+          let phraseLen = Math.floor(
+            Math.random() * thisPhrase["melody"].length
+          );
+          let phrase = new Array();
+
+          for (a = 0; a < phraseLen; a++) {
+            phrase.push(
+              thisPhrase["melody"][
+                Math.floor(Math.random() * thisPhrase["melody"].length)
+              ]
+            );
+          }
+
+          let volume = Math.random() * 0.15;
+          let delay = Math.random() * 8000;
+          let x = Math.random() * 300 - 150;
+          let y = Math.random() * 300 - 150;
+          let z = Math.random() * 300 - 150;
+          let release = attack + length;
+          nextPhrase += release;
+
+          var noteDelay = 0;
+          for (b = 0; b <= phrase.length; b++) {
+            let length =
+              document.getElementById("activity").value *
+              ((Math.floor(Math.random() * 8) + 1) / 8);
+            let volume = Math.random() * 0.15;
+            nextPhrase += length;
+            let x = Math.random() * 300 - 150;
+            let y = Math.random() * 300 - 150;
+            let z = Math.random() * 300 - 150;
+            let release = attack + length;
+            let playNote = Tonal.Note.freq(theme[b]);
+            if (b < phrase.length) {
+              t = setTimeout(
+                'synth("sine",' +
+                  Tonal.Note.freq(phrase[b]) +
+                  "," +
+                  volume +
+                  "," +
+                  attack +
+                  "," +
+                  length +
+                  "," +
+                  release +
+                  "," +
+                  x +
+                  "," +
+                  y +
+                  "," +
+                  z +
+                  ',"' +
+                  phrase[b] +
+                  '");',
+                noteDelay + Math.random() * 1000
+              );
+            } else {
+              // nothing
+            }
+            noteDelay += length;
+          }
+
+          d = setTimeout(
+            'synth("sine",' +
+              Tonal.Note.freq(drone) +
+              "," +
+              volume +
+              "," +
+              attack +
+              "," +
+              nextPhrase +
+              "," +
+              release +
+              "," +
+              x +
+              "," +
+              y +
+              "," +
+              z +
+              ',"' +
+              drone +
+              '");',
+            voice * (Math.random() * 1000)
+          );
+        }
+
+        t = setTimeout(function() {
+          play(state);
+        }, nextPhrase);
+      }
+
+      var c;
+      function config() {
+        if (document.getElementById("settings").checked === true) {
+          return; // custom settings enabled
+        }
+
+        let m = new Date().getMonth() + 1;
+        let d = new Date().getDate();
+        let y = new Date().getFullYear();
+        let h = new Date().getHours();
+        let i = new Date().getMinutes();
+        let s = new Date().getSeconds();
+
+        let keys = new Array(
+          "c",
+          "g",
+          "d",
+          "a",
+          "e",
+          "b",
+          "f#",
+          "c#",
+          "g#",
+          "d#",
+          "bb",
+          "f"
+        );
+
+        let root = keys[h % keys.length];
+        let modifier = "";
+        if (root.length > 1) {
+          modifier = root.charAt(1);
+          root = root.charAt(0);
+        }
+
+        document.getElementById("key").value = root;
+        document.getElementById("mod").value = modifier;
+
+        if (i <= 20 || i >= 40) {
+          document.getElementById("activity").value = 4000;
+        } else {
+          document.getElementById("activity").value = 2000;
+        }
+
+        let useScale = "";
+        if (h <= 4) {
+          useScale = "minor";
+        } else if (h <= 8) {
+          useScale = "pentatonic";
+        } else if (h <= 12) {
+          useScale = "major";
+        } else if (h <= 16) {
+          useScale = "pentatonic";
+        } else if (h <= 20) {
+          useScale = "minor";
+        } else {
+          useScale = "pentatonic";
+        }
+
+        if (h <= 6 || h >= 21) {
+          document.getElementById("attack").value = 250;
+        } else {
+          document.getElementById("attack").value = 10;
+        }
+        document.getElementById("color").value = colors[h];
+        document.getElementsByTagName(
+          "body"
+        )[0].style.backgroundColor = document.getElementById("color").value;
+      }
+
+      function toggleOptions() {
+        if (document.getElementById("settings").checked === true) {
+          document.getElementById("options").style.opacity = 0.8;
+        } else {
+          document.getElementById("options").style.opacity = 0;
+        }
+      }
+
+      function populateColors() {
+        for (var i in colors) {
+          var o = document.createElement("option");
+          o.value = colors[i];
+          o.innerHTML =
+            "<span style='color:" + colors[i] + "'>" + i + ":00</span>";
+          document.getElementById("color").appendChild(o);
+        }
+      }
+
+      function weather(position) {
+        var xhr = new XMLHttpRequest();
+        xhr.open(
+          "GET",
+          "https://api.darksky.net/forecast/8974389dfc45d788f6b7f62d94d5dd36/" +
+            position.coords.latitude +
+            "," +
+            position.coords.longitude
+        );
+        xhr.onload = function() {
+          var w = JSON.parse(xhr.responseText);
+          alert(w);
+        };
+        xhr.send();
+      }
+
+      function getPosition() {
+        navigator.geolocation.getCurrentPosition(weather);
+      }
+
+      var timeLeft = 0;
+      function timer(x) {
+        if (x == 1) {
+          timeLeft = document.getElementById("timer").value * 60;
+          document.getElementById("timer").style.display = "none";
+          document.getElementById("medTimerActive").style.display = "inline";
+          count();
+          document.getElementById("medToggle").value = "Stop";
+          document
+            .getElementById("medToggle")
+            .setAttribute("onclick", "timer(0);");
+          state = 0;
+          document.getElementById("about").style.opacity = 0;
+          if (document.getElementById("settings").checked === true) {
+            document.getElementById("options").style.opacity = 0;
+          }
+        } else {
+          document.getElementById("medToggle").value = "Start";
+          document
+            .getElementById("medToggle")
+            .setAttribute("onclick", "timer(1);");
+          document.getElementById("timer").style.display = "inline";
+          document.getElementById("medTimerActive").style.display = "none";
+          timeLeft = 0;
+          state = 1;
+          document.getElementById("about").style.opacity = 0.8;
+          if (document.getElementById("settings").checked === true) {
+            document.getElementById("options").style.opacity = 0.8;
+          }
+        }
+        play(state);
+      }
+
+      var t;
+      function count() {
+        if (timeLeft >= 1) {
+          let m = Math.floor(timeLeft / 60);
+          let s = timeLeft - m * 60;
+          if (m <= 9) {
+            m = "0" + m;
+          }
+          if (s <= 9) {
+            s = "0" + s;
+          }
+          document.getElementById("medTimerActive").value = m + ":" + s;
+          t = setTimeout(function() {
+            count();
+          }, 1000);
+        } else {
+          timer(0);
+        }
+        timeLeft = timeLeft - 1;
+      }
+    </script>
+  </head>
+  <body onload="/*populateColors();*/config();/*getPosition();*/">
+    <div id="grad">&nbsp;</div>
+
+    <table id="mainTable">
+      <tr>
+        <td>relax.</td>
+        <td>
+          <input
+            type="button"
+            value="Play"
+            id="stateButton"
+            onclick="clearTimeout(t);state++;play(state);"
+          />
+        </td>
+      </tr>
+
+      <tr></tr>
+      <tr>
+        <td>meditation timer</td>
+        <td>
+          <input type="text" id="medTimerActive" readonly size="5" />
+          <select id="timer" name="timer">
+            <option value="1">1:00</option>
+            <option value="2">2:00</option>
+            <option value="3">3:00</option>
+            <option value="4">4:00</option>
+            <option value="5">5:00</option>
+            <option value="6">6:00</option>
+            <option value="7">7:00</option>
+            <option value="8">8:00</option>
+            <option value="9">9:00</option>
+            <option value="10">10:00</option>
+            <option value="11">11:00</option>
+            <option value="12">12:00</option>
+            <option value="13">13:00</option>
+            <option value="14">14:00</option>
+            <option value="15">15:00</option>
+            <option value="16">16:00</option>
+            <option value="17">17:00</option>
+            <option value="18">18:00</option>
+            <option value="19">19:00</option>
+            <option value="20">20:00</option>
+            <option value="21">21:00</option>
+            <option value="22">22:00</option>
+            <option value="23">23:00</option>
+            <option value="24">24:00</option>
+            <option value="25">25:00</option>
+            <option value="26">26:00</option>
+            <option value="27">27:00</option>
+            <option value="28">28:00</option>
+            <option value="29">29:00</option>
+            <option value="30">30:00</option>
+          </select>
+          <input
+            type="button"
+            id="medToggle"
+            value="start"
+            onclick="timer(1);"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2"><div id="status"></div></td>
+      </tr>
+      <tr>
+        <td>custom settings</td>
+        <td>
+          <input
+            type="checkbox"
+            name="settings"
+            id="settings"
+            onclick="toggleOptions();"
+          />
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <div id="options">
+            <table>
+              <tr>
+                <td colspan="2">
+                  note: time-based changes will not occur while "custom
+                  settings" is selected.
+                </td>
+              </tr>
+              <tr>
+                <td>tonality</td>
+                <td>
+                  <select id="key" name="key">
+                    <option value="c">C</option>
+                    <option value="d">D</option>
+                    <option value="e">E</option>
+                    <option value="f">F</option>
+                    <option value="g" selected>G</option>
+                    <option value="a">A</option>
+                    <option value="b">B</option>
+                  </select>
+                  <select id="mod" name="mod">
+                    <option value="b">Flat</option>
+                    <option value="" selected>Natural</option>
+                    <option value="#">Sharp</option>
+                  </select>
+                  <select id="scale" name="scale">
+                    <option value="pentatonic" selected>Pentatonic</option>
+                    <option value="major">Major</option>
+                    <option value="minor">Minor</option>
+                    <option value="dorian">Dorian</option>
+                    <option value="phrygian">Phrygian</option>
+                    <option value="lydian">Lydian</option>
+                    <option value="mixolydian">Mixolydian</option>
+                    <option value="Aeolian">Aeolian</option>
+                    <option value="locrian">Locrian</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>activity</td>
+                <td>
+                  <select id="activity" name="activity">
+                    <option value="1000">Busy</option>
+                    <option value="2000">Alert</option>
+                    <option value="4000" selected>Calm</option>
+                    <option value="8000">Sparse</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>attack</td>
+                <td>
+                  <select
+                    id="attack"
+                    name="attack"
+                    onchange="attack=this.value*1;"
+                  >
+                    <option value="10">Crisp</option>
+                    <option value="250">Soft</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>voices</td>
+                <td>
+                  <label for="voices">Simultaneity:</label>
+                  <select id="voices" name="voices">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>volume</td>
+                <td>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="50"
+                    class="slider"
+                    id="volume"
+                    onchange="document.getElementById('volDisplay').value=this.value+'%';"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>color</td>
+                <td>
+                  <select
+                    id="color"
+                    name="color"
+                    onchange="document.getElementsByTagName('body')[0].style.backgroundColor=this.value;"
+                  ></select>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
