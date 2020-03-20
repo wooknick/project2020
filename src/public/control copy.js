@@ -110,7 +110,6 @@ function control(event) {
 
 function testPlay(event) {
   wantStop = false;
-  console.log(audio.state);
   if (audio.state === "suspended") {
     audio.resume();
   }
@@ -119,22 +118,16 @@ function testPlay(event) {
 
 function testStop(event) {
   wantStop = true;
-  console.log(audio.state);
   if (audio.state === "running") {
     audio.suspend();
   }
-  console.log(queue);
-  queue.map(s => clearTimeout(s));
-  queue = [];
-  oscs.map((osc, i) => {
-    console.log(osc, i);
+  console.log("oscs : ");
+  console.log(oscs);
+  oscs.map(osc => {
+    console.log("stop");
     osc.stop(0);
-    osc.disconnect(gainNodes[i]);
-    console.log(gainNodes[i]);
-    gainNodes[i].disconnect(audio.destination);
   });
   oscs = [];
-  gainNodes = [];
 }
 
 function setMotion(emotion) {
@@ -189,7 +182,7 @@ function separateTones(theme, octave) {
 function synth(w, f, v, a, l, d, x, y, z) {
   v = v * (masterVolume / 100);
 
-  if (v == 0) {
+  if (v == 0 || wantStop) {
     return;
   }
 
@@ -214,7 +207,7 @@ function synth(w, f, v, a, l, d, x, y, z) {
   osc.start(0);
 
   oscs.push(osc);
-  gainNodes.push(gainNode);
+  // gainNodes.push(gainNode);
 
   var stoptime = (a + l + d) * 1.1;
 
@@ -225,9 +218,7 @@ function synth(w, f, v, a, l, d, x, y, z) {
     gainNode.disconnect(audio.destination);
   }, stoptime);
 
-  console.log(ss);
   queue.push(ss);
-  console.log(queue);
 }
 
 function play() {

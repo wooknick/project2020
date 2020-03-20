@@ -10,9 +10,129 @@
       rel="stylesheet"
       href="https://unpkg.com/flickity@2/dist/flickity.min.css"
     />
-    <link rel="stylesheet" href="./style.41cf2e9f.css" />
+    <link rel="stylesheet" href="./style.d38298ea.css" />
   </head>
   <body>
+    <div class="control">
+      <div class="control_title">
+        <span>control pads</span>
+        <div id="play" onclick="testPlay(event)">▶</div>
+        <div id="stop" onclick="testStop(event)">◼️</div>
+      </div>
+      <div class="control_wrapper">
+        <div class="control_item">
+          <div class="item_name">wave</div>
+          <div class="item_value">
+            <select name="wave" id="wave" onchange="control(event)">
+              <option value="sine">sine</option>
+              <option value="sawtooth">sawtooth</option>
+              <option value="square">square</option>
+              <option value="triangle">triangle</option>
+            </select>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">key</div>
+          <div class="item_value">
+            <select name="key" id="key" onchange="control(event)">
+              <option value="c">c</option>
+              <option value="d">d</option>
+              <option value="e">e</option>
+              <option value="f">f</option>
+              <option value="g">g</option>
+              <option value="a">a</option>
+              <option value="b">b</option>
+            </select>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">mod</div>
+          <div class="item_value">
+            <select name="mod" id="mod" onchange="control(event)">
+              <option value="none">-</option>
+              <option value="sharp">sharp</option>
+              <option value="flat">flat</option>
+            </select>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">scale</div>
+          <div class="item_value">
+            <select name="scale" id="scale" onchange="control(event)">
+              <option value="pentatonic">pentatonic</option>
+              <option value="major">major</option>
+              <option value="minor">minor</option>
+              <option value="dorian">dorian</option>
+              <option value="phrygian">phrygian</option>
+              <option value="lydian">lydian</option>
+              <option value="mixolydian">mixolydian</option>
+              <option value="aeolian">aeolian</option>
+              <option value="locrian">locrian</option>
+            </select>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">activity</div>
+          <div class="item_value">
+            <input
+              type="range"
+              name="activity"
+              id="activity"
+              min="100"
+              max="8000"
+              step="100"
+              value="4000"
+              onchange="control(event)"
+            />
+            <span id="check_activity">4000</span>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">attack</div>
+          <div class="item_value">
+            <input
+              type="range"
+              name="attack"
+              id="attack"
+              min="10"
+              max="1000"
+              step="10"
+              value="250"
+              onchange="control(event)"
+            />
+            <span id="check_attack">250</span>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">voices</div>
+          <div class="item_value">
+            <select name="voices" id="voices" onchange="control(event)">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+        </div>
+        <div class="control_item">
+          <div class="item_name">masterVolume</div>
+          <div class="item_value">
+            <input
+              type="range"
+              name="masterVolume"
+              id="masterVolume"
+              min="0"
+              max="100"
+              step="1"
+              value="50"
+              onchange="control(event)"
+            />
+            <span id="check_masterVolume">50</span>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="wrapper">
       <div class="content_block">
         <div class="title"><span class="title_text">보통의 하루</span></div>
