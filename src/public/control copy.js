@@ -10,16 +10,33 @@ var soundInit = false;
 var t;
 var d;
 var audio = new (window.AudioContext || window.webkitAudioContext)();
+var queue = [];
+var wantStop = true;
+var sources = [];
+var gainNodes = [];
+var oscs = [];
 
 // tone setting 정보
-var wave = "triangle"; // sine, sawtooth, square, triangle, custom
-var key = "g"; // c, d, e, f, g, a, b
+
+var wave = "sine"; // sine, sawtooth, square, triangle, custom
+var key = "c"; // c, d, e, f, g, a, b
 var mod = ""; // "", #, b
-var scale = "major"; // Pentatonic, Major, Minor, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian
+var scale = "pentatonic"; // Pentatonic, Major, Minor, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian
 var activity = 4000; // 1000, 2000, 4000, 8000
 var attack = 250; // 10, 250
 var voices = 1; // 1, 2, 3, 4, 5
 var masterVolume = 50; // 1 - 100;
+
+var toneSetting = {
+  wave: "sine",
+  key: "c",
+  mod: "",
+  scale: "pentatonic",
+  activity: 4000,
+  attack: 250,
+  voices: 1,
+  masterVolume: 50
+};
 
 // 모바일 버퍼 생성
 window.addEventListener(
@@ -40,6 +57,84 @@ window.addEventListener(
 
 if (window.speechSynthesis) {
   var announce = window.speechSynthesis;
+}
+
+// function audioInit() {
+//   // create empty buffer
+//   var buffer = audio.createBuffer(1, 1, 22050);
+//   var source = audio.createBufferSource();
+//   // alert(source);
+//   source.buffer = buffer;
+//   // connect to output (your speakers)
+//   source.connect(audio.destination);
+//   // play the file
+//   source.noteOn(0);
+// }
+
+function control(event) {
+  const tag = event.target.localName;
+  const name = event.target.name;
+  let value = event.target.value;
+  if (tag === "input") {
+    event.target.nextElementSibling.innerHTML = value;
+  }
+  if (name === "mod") {
+    if (value === "none") {
+      value = "";
+    } else if (value === "sharp") {
+      value = "#";
+    } else if (value === "flat") {
+      value = "b";
+    }
+  }
+  toneSetting[name] = value;
+
+  if (name === "wave") {
+    wave = value;
+  } else if (name === "key") {
+    key = value;
+  } else if (name === "mod") {
+    mod = value;
+  } else if (name === "scale") {
+    scale = value;
+  } else if (name === "activity") {
+    activity = value;
+  } else if (name === "attack") {
+    attack = value;
+  } else if (name === "voices") {
+    voices = value;
+  } else if (name === "masterVolume") {
+    masterVolume = value;
+  }
+}
+
+function testPlay(event) {
+  wantStop = false;
+  console.log(audio.state);
+  if (audio.state === "suspended") {
+    audio.resume();
+  }
+  play();
+}
+
+function testStop(event) {
+  wantStop = true;
+  console.log(audio.state);
+  if (audio.state === "running") {
+    audio.suspend();
+  }
+  console.log(queue);
+  queue.map(s => clearTimeout(s));
+  queue = [];
+  oscs.map((osc, i) => {
+    console.log(osc, i);
+    osc.stop(0);
+    osc.disconnect(gainNodes[i]);
+    console.log(gainNodes[i]);
+    gainNodes[i].disconnect(audio.destination);
+  });
+  oscs = [];
+  gainNodes = [];
 }
 
 function setMotion(emotion) {
@@ -118,17 +213,28 @@ function synth(w, f, v, a, l, d, x, y, z) {
   osc.connect(gainNode);
   osc.start(0);
 
+  oscs.push(osc);
+  gainNodes.push(gainNode);
+
   var stoptime = (a + l + d) * 1.1;
 
-  setTimeout(function() {
+  var ss = setTimeout(function() {
     gainNode.gain.linearRampToValueAtTime(0, audio.currentTime + 5);
     osc.stop(audio.currentTime + 7);
     osc.disconnect(gainNode);
     gainNode.disconnect(audio.destination);
   }, stoptime);
+
+  console.log(ss);
+  queue.push(ss);
+  console.log(queue);
 }
 
 function play() {
+  if (wantStop) {
+    return;
+  }
+  console.log("play");
   for (voice = 0; voice < voices; voice++) {
     var nextPhrase = 0; // 재생 시간 관련인듯
     let theme = getTheme(); // 스케일에 따라 note 확보
@@ -165,6 +271,8 @@ function play() {
           )}, ${volume}, ${attack}, ${length}, ${delay}, ${x}, ${y}, ${z})`,
           noteDelay + Math.random() * 1000
         );
+
+        queue.push(t);
       }
       noteDelay += length;
     }
@@ -185,6 +293,8 @@ function play() {
         `,
         voice * (Math.random() * 1000)
       );
+
+      queue.push(d);
     }
   }
 
@@ -213,27 +323,20 @@ var flkty = new Flickity(elem, {
     },
     change: function(index) {
       pageUpdate(index);
-      if (!soundInit) {
-        // playSound("init");
-        play();
-        soundInit = true;
-      }
-      if (preIndex === 2 && index === 3) {
-        // playSound("star_gazing");
-        // stop();
-        setMotion(1);
-        // play();
-      } else if (preIndex === 5 && index === 6) {
-        setMotion(2);
-        // playSound("magical_journey");
-      } else if (preIndex === 6 && index === 5) {
-        // playSound("star_gazing");
-        setMotion(1);
-      } else if (preIndex === 3 && index === 2) {
-        setMotion(2);
-        // playSound("dawn");
-      }
-      preIndex = index;
+      // if (!soundInit) {
+      //   play();
+      //   soundInit = true;
+      // }
+      // if (preIndex === 2 && index === 3) {
+      //   setMotion(1);
+      // } else if (preIndex === 5 && index === 6) {
+      //   setMotion(2);
+      // } else if (preIndex === 6 && index === 5) {
+      //   setMotion(1);
+      // } else if (preIndex === 3 && index === 2) {
+      //   setMotion(2);
+      // }
+      // preIndex = index;
     }
   }
 });

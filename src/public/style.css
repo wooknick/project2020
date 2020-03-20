@@ -1,6 +1,5 @@
 @import "/reset.css";
 @import "/global.css";
-
 body {
   display: flex;
   justify-content: center;
@@ -10,6 +9,82 @@ body {
   overflow: hidden !important;
   background-color: grey;
 }
+
+.control {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 400px;
+  height: 400px;
+  background-color: ivory;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.control_title {
+  height: 60px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-transform: capitalize;
+}
+
+#play {
+  margin-left: 10px;
+}
+
+#play:hover {
+  cursor: pointer;
+}
+
+#stop {
+  margin-left: 10px;
+}
+
+#stop:hover {
+  cursor: pointer;
+}
+
+.control_wrapper {
+  display: grid;
+  width: 100%;
+  padding: 20px;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 40px;
+  row-gap: 2px;
+}
+
+.control_item {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.item_name {
+  width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: capitalize;
+}
+
+.item_value {
+  width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: capitalize;
+}
+
+select {
+  width: 180px;
+  height: 35px;
+  font-size: 20px;
+  text-transform: capitalize;
+}
+
 .wrapper {
   display: flex;
   max-width: 550px;
@@ -59,6 +134,7 @@ body {
   font-size: 17px;
   line-height: 180%;
 }
+
 .content_text::first-letter {
   font-size: 30px;
 }
